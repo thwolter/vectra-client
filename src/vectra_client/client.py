@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Any, Mapping, Sequence
 from uuid import UUID
 
@@ -27,35 +25,14 @@ class _ChunkSearchResponse(BaseModel):
 class VectraClient:
     """HTTP client for querying document chunks in a tenant-aware Vectra backend."""
 
-    def __init__(
-        self,
-        *,
-        base_url: str,
-        endpoint: str | None = None,
-        document_availability_endpoint: str | None = None,
-        timeout_seconds: float,
-        service_user_id: UUID,
-        service_role: str | None = None,
-        service_scopes: Sequence[str] | None = None,
-    ) -> None:
-        settings = VectraClientSettings()
-        self._base_url = base_url.rstrip("/")
-        endpoint_value = endpoint or settings.endpoint
-        self._endpoint = (
-            endpoint_value if endpoint_value.startswith("/") else f"/{endpoint_value}"
-        )
-        doc_avail_value = (
-            document_availability_endpoint or settings.document_availability_endpoint
-        )
-        self._document_availability_endpoint = (
-            doc_avail_value
-            if doc_avail_value.startswith("/")
-            else f"/{doc_avail_value}"
-        )
-        self._timeout = timeout_seconds
-        self._service_user_id = service_user_id
-        self._service_role = service_role
-        self._service_scopes = tuple(service_scopes or ())
+    def __init__(self, settings: VectraClientSettings) -> None:
+        self._base_url = settings.base_url
+        self._endpoint = settings.get_chunks
+        self._document_availability_endpoint = settings.document_availability_endpoint
+        self._timeout = settings.timeout_seconds
+        self._service_user_id = settings.service_user_id
+        self._service_role = settings.service_role
+        self._service_scopes = settings.service_scopes
 
     def _build_headers(self, tenant_id: UUID) -> dict[str, str]:
         auth_ctx = AuthContext(
@@ -182,7 +159,7 @@ def _build_client(settings: VectraClientSettings) -> VectraClient:
         raise RuntimeError("base_url must be set for the Vectra client")
     return VectraClient(
         base_url=settings.base_url,
-        endpoint=settings.endpoint,
+        endpoint=settings.get_chunks,
         document_availability_endpoint=settings.document_availability_endpoint,
         timeout_seconds=settings.timeout_seconds,
         service_user_id=settings.service_user_id,
