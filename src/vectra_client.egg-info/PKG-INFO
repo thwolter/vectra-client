@@ -1,0 +1,20 @@
+Metadata-Version: 2.4
+Name: vectra-client
+Version: 0.1.0
+Summary: Reusable client for querying the Vectra retrieval API.
+Author-email: Thomas Wolter <support@riskary.de>
+License: MIT
+Requires-Python: >=3.13
+Description-Content-Type: text/markdown
+Requires-Dist: httpx>=0.28.1
+Requires-Dist: langchain-core>=0.3.78
+Requires-Dist: nexor
+Requires-Dist: pydantic>=2.10
+Requires-Dist: tenauth@ git+https://github.com/thwolter/fde-tenauth.git@main
+Provides-Extra: dev
+Requires-Dist: pytest>=8.3.5; extra == "dev"
+Requires-Dist: pytest-asyncio>=1.2.0; extra == "dev"
+
+# Vectra Client
+
+Minimal shared client library for interacting with the Vectra retrieval API.

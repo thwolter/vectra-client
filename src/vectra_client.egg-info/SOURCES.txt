@@ -1,0 +1,11 @@
+README.md
+pyproject.toml
+src/vectra_client/__init__.py
+src/vectra_client/client.py
+src/vectra_client/errors.py
+src/vectra_client/settings.py
+src/vectra_client.egg-info/PKG-INFO
+src/vectra_client.egg-info/SOURCES.txt
+src/vectra_client.egg-info/dependency_links.txt
+src/vectra_client.egg-info/requires.txt
+src/vectra_client.egg-info/top_level.txt

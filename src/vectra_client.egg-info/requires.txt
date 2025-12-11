@@ -1,0 +1,9 @@
+httpx>=0.28.1
+langchain-core>=0.3.78
+nexor
+pydantic>=2.10
+tenauth@ git+https://github.com/thwolter/fde-tenauth.git@main
+
+[dev]
+pytest>=8.3.5
+pytest-asyncio>=1.2.0
