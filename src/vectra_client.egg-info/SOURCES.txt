@@ -3,6 +3,7 @@ pyproject.toml
 src/vectra_client/__init__.py
 src/vectra_client/client.py
 src/vectra_client/errors.py
+src/vectra_client/factory.py
 src/vectra_client/settings.py
 src/vectra_client.egg-info/PKG-INFO
 src/vectra_client.egg-info/SOURCES.txt

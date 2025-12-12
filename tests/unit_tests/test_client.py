@@ -4,7 +4,10 @@ from uuid import uuid4
 
 import pytest
 
-from vectra_client import VectraClient
+from vectra_client import VectraClient, VectraClientSettings
+from vectra_client.schemas import CheckDocumentRequest, ChunkSearchRequest
+
+DEFAULT_DIGEST = "vI7EHYpQg6bnz2PsLviZVeneXbMs9iqDQyOgUjIhClc="
 
 
 class _DummyResponse:
@@ -28,6 +31,7 @@ class _DummyAsyncClient:
         self.last_path: str | None = None
         self.last_payload: dict | None = None
         self.last_headers: dict[str, str] | None = None
+        self.last_method: str | None = None
         self._response_map: dict[str, dict] = {
             "/api/v1/search/chunks": {
                 "results": [
@@ -38,8 +42,18 @@ class _DummyAsyncClient:
                         "score": 0.85,
                     }
                 ]
-            }
+            },
+            "/api/v1/search/document-availability": {"available": True},
         }
+
+    def _normalize_path(self, path: str) -> str:
+        normalized = path
+        base = (self.base_url or "").rstrip("/")
+        if base and normalized.startswith(base):
+            normalized = normalized[len(base) :]
+        if not normalized.startswith("/"):
+            normalized = f"/{normalized}"
+        return normalized
 
     async def post(
         self, path: str, *, json: dict, headers: dict[str, str]
@@ -47,7 +61,17 @@ class _DummyAsyncClient:
         self.last_path = path
         self.last_payload = json
         self.last_headers = headers
-        return _DummyResponse(self._response_map.get(path, {}))
+        self.last_method = "post"
+        return _DummyResponse(self._response_map.get(self._normalize_path(path), {}))
+
+    async def get(
+        self, path: str, *, params: dict | None, headers: dict[str, str]
+    ) -> _DummyResponse:
+        self.last_path = path
+        self.last_payload = params
+        self.last_headers = headers
+        self.last_method = "get"
+        return _DummyResponse(self._response_map.get(self._normalize_path(path), {}))
 
     async def __aenter__(self) -> "_DummyAsyncClient":
         return self
@@ -58,9 +82,6 @@ class _DummyAsyncClient:
 
 @pytest.mark.asyncio
 async def test_vectra_client_builds_request_and_parses_response(monkeypatch):
-    tenant_id = uuid4()
-    service_user = uuid4()
-
     created_clients: list[_DummyAsyncClient] = []
 
     def _factory(**kwargs):
@@ -71,23 +92,21 @@ async def test_vectra_client_builds_request_and_parses_response(monkeypatch):
     monkeypatch.setattr("vectra_client.client.httpx.AsyncClient", _factory)
 
     client = VectraClient(
-        base_url="http://vectra",
-        timeout_seconds=5.0,
-        service_user_id=service_user,
-        service_role="system",
-        service_scopes=("chunks:read",),
+        token="token",
+        settings=VectraClientSettings(base_url="http://vectra", timeout_seconds=5.0),
     )
 
-    results = await client.search_chunks(
-        tenant_id=tenant_id,
-        collection="default",
-        digest="digest",
+    request = ChunkSearchRequest(
+        digest=DEFAULT_DIGEST,
         query="topic",
+        collection="default",
         limit=4,
         metadata_filter={"source": {"$eq": "file.pdf"}},
         exclude_chunk_ids=[1, 2],
         score_threshold=0.5,
     )
+
+    results = await client.get_chunks(request)
 
     assert len(results) == 1
     doc, score = results[0]
@@ -99,18 +118,16 @@ async def test_vectra_client_builds_request_and_parses_response(monkeypatch):
     assert created_clients
     sent = created_clients[0]
     assert sent.base_url == "http://vectra"
-    assert sent.last_path == "/api/v1/search/chunks"
+    assert sent.last_path == "http://vectra/api/v1/search/chunks"
     assert sent.last_payload and sent.last_payload["collection"] == "default"
     assert sent.last_payload["metadata_filter"] == {"source": {"$eq": "file.pdf"}}
     assert sent.last_payload["exclude_chunk_ids"] == [1, 2]
+    assert sent.last_payload["score_threshold"] == 0.5
     assert "Authorization" in (sent.last_headers or {})
 
 
 @pytest.mark.asyncio
 async def test_vectra_client_normalizes_base_url_and_endpoint(monkeypatch):
-    tenant_id = uuid4()
-    service_user = uuid4()
-
     created_clients: list[_DummyAsyncClient] = []
 
     def _factory(**kwargs):
@@ -121,31 +138,26 @@ async def test_vectra_client_normalizes_base_url_and_endpoint(monkeypatch):
     monkeypatch.setattr("vectra_client.client.httpx.AsyncClient", _factory)
 
     client = VectraClient(
-        base_url="http://vectra/",
-        endpoint="api/v1/search/chunks",
-        timeout_seconds=5.0,
-        service_user_id=service_user,
+        token="token",
+        settings=VectraClientSettings(base_url="http://vectra/", timeout_seconds=5.0),
     )
 
-    await client.search_chunks(
-        tenant_id=tenant_id,
-        collection="default",
-        digest="digest",
+    request = ChunkSearchRequest(
+        digest=DEFAULT_DIGEST,
         query="topic",
         limit=1,
     )
 
+    await client.get_chunks(request)
+
     assert created_clients
     sent = created_clients[0]
     assert sent.base_url == "http://vectra"
-    assert sent.last_path == "/api/v1/search/chunks"
+    assert sent.last_path == "http://vectra/api/v1/search/chunks"
 
 
 @pytest.mark.asyncio
 async def test_vectra_client_checks_document_availability(monkeypatch):
-    tenant_id = uuid4()
-    service_user = uuid4()
-
     created_clients: list[_DummyAsyncClient] = []
 
     def _factory(**kwargs):
@@ -156,24 +168,60 @@ async def test_vectra_client_checks_document_availability(monkeypatch):
     monkeypatch.setattr("vectra_client.client.httpx.AsyncClient", _factory)
 
     client = VectraClient(
-        base_url="http://vectra",
-        timeout_seconds=5.0,
-        service_user_id=service_user,
-        document_availability_endpoint="api/v1/search/document-availability",
+        token="token",
+        settings=VectraClientSettings(base_url="http://vectra", timeout_seconds=5.0),
     )
 
     doc_id = uuid4()
-    await client.check_document_availability(
-        tenant_id=tenant_id,
+    request = CheckDocumentRequest(
         document_id=doc_id,
-        digest="digest",
+        digest=DEFAULT_DIGEST,
         collection="default",
     )
+    await client.check_document(request)
 
     assert created_clients
     sent = created_clients[0]
     assert sent.base_url == "http://vectra"
-    assert sent.last_path == "/api/v1/search/document-availability"
+    assert sent.last_path == "http://vectra/api/v1/search/document-availability"
     assert sent.last_payload and sent.last_payload["document_id"] == str(doc_id)
-    assert sent.last_payload["digest"] == "digest"
+    assert sent.last_payload["digest"] == DEFAULT_DIGEST
     assert sent.last_payload["collection"] == "default"
+
+
+@pytest.mark.asyncio
+async def test_request_json_supports_get(monkeypatch):
+    created_clients: list[_DummyAsyncClient] = []
+
+    def _factory(**kwargs):
+        client = _DummyAsyncClient(**kwargs)
+        created_clients.append(client)
+        return client
+
+    monkeypatch.setattr("vectra_client.client.httpx.AsyncClient", _factory)
+
+    client = VectraClient(
+        token="token",
+        settings=VectraClientSettings(base_url="http://vectra", timeout_seconds=2.0),
+    )
+
+    data = await client._request_json(
+        "/api/v1/search/chunks",
+        {"collection": "default"},
+        method="get",
+    )
+
+    assert data == {
+        "results": [
+            {
+                "chunk_id": "5",
+                "text": "chunk one",
+                "metadata": {"page": 1},
+                "score": 0.85,
+            }
+        ]
+    }
+    assert created_clients
+    sent = created_clients[0]
+    assert sent.last_method == "get"
+    assert sent.last_payload == {"collection": "default"}

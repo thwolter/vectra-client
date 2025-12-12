@@ -1,5 +1,7 @@
-from .client import VectraClient, get_vectra_client
+from .client import VectraClient
 from .errors import VectraClientError, VectraResponseError
+from .factory import get_vectra_client
+from .schemas import CheckDocumentRequest, ChunkSearchRequest
 from .settings import VectraClientSettings
 
 __all__ = [
@@ -8,4 +10,6 @@ __all__ = [
     "VectraClientError",
     "VectraResponseError",
     "VectraClientSettings",
+    "ChunkSearchRequest",
+    "CheckDocumentRequest",
 ]

@@ -1,8 +1,16 @@
-from vectra_client import VectraClient, VectraClientSettings
+from .client import VectraClient
+from .settings import VectraClientSettings
+
+_default_client: VectraClient | None = None
 
 
 def get_vectra_client(
-    settings_cls: type[VectraClientSettings] | None = None,
+    token: str, *, settings_cls: type[VectraClientSettings] | None = None
 ) -> VectraClient:
-    actual_settings = (settings_cls or VectraClientSettings)()
-    return VectraClient(settings=actual_settings)
+    global _default_client
+
+    if not _default_client:
+        actual_settings = (settings_cls or VectraClientSettings)()
+        _default_client = VectraClient(token, settings=actual_settings)
+
+    return _default_client

@@ -1,7 +1,11 @@
 [project]
 name = "vectra-client"
 version = "0.1.0"
-description = "Reusable client for querying the Vectra retrieval API."
+description = "Internal reusable client for querying the Vectra retrieval API."
+classifiers = [
+    "Private :: Do Not Upload",
+    "Development Status :: 1 - Planning"
+]
 authors = [
     { name = "Thomas Wolter", email = "support@riskary.de" },
 ]

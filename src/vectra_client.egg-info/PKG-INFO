@@ -1,9 +1,11 @@
 Metadata-Version: 2.4
 Name: vectra-client
 Version: 0.1.0
-Summary: Reusable client for querying the Vectra retrieval API.
+Summary: Internal reusable client for querying the Vectra retrieval API.
 Author-email: Thomas Wolter <support@riskary.de>
 License: MIT
+Classifier: Private :: Do Not Upload
+Classifier: Development Status :: 1 - Planning
 Requires-Python: >=3.13
 Description-Content-Type: text/markdown
 Requires-Dist: httpx>=0.28.1
