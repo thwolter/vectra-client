@@ -118,7 +118,7 @@ async def test_vectra_client_builds_request_and_parses_response(monkeypatch):
     assert created_clients
     sent = created_clients[0]
     assert sent.base_url == "http://vectra"
-    assert sent.last_path == "http://vectra/api/v1/search/chunks"
+    assert sent.last_path == "/api/v1/search/chunks"
     assert sent.last_payload and sent.last_payload["collection"] == "default"
     assert sent.last_payload["metadata_filter"] == {"source": {"$eq": "file.pdf"}}
     assert sent.last_payload["exclude_chunk_ids"] == [1, 2]
@@ -153,7 +153,7 @@ async def test_vectra_client_normalizes_base_url_and_endpoint(monkeypatch):
     assert created_clients
     sent = created_clients[0]
     assert sent.base_url == "http://vectra"
-    assert sent.last_path == "http://vectra/api/v1/search/chunks"
+    assert sent.last_path == "/api/v1/search/chunks"
 
 
 @pytest.mark.asyncio
@@ -183,7 +183,7 @@ async def test_vectra_client_checks_document_availability(monkeypatch):
     assert created_clients
     sent = created_clients[0]
     assert sent.base_url == "http://vectra"
-    assert sent.last_path == "http://vectra/api/v1/search/document-availability"
+    assert sent.last_path == "/api/v1/search/document-availability"
     assert sent.last_payload and sent.last_payload["document_id"] == str(doc_id)
     assert sent.last_payload["digest"] == DEFAULT_DIGEST
     assert sent.last_payload["collection"] == "default"
