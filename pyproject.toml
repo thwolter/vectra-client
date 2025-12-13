@@ -1,6 +1,6 @@
 [project]
 name = "vectra-client"
-version = "0.1.0"
+version = "0.1.1"
 description = "Internal reusable client for querying the Vectra retrieval API."
 classifiers = [
     "Private :: Do Not Upload",
