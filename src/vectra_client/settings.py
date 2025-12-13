@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings
 
 
 class VectraClientSettings(BaseSettings):
-    base_url: str | None = None
+    vectra_base_url: str | None = None
     timeout_seconds: float = Field(default=10.0, gt=0.0)
 
     @field_validator("base_url", mode="after")
